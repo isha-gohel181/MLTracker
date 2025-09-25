@@ -1,10 +1,11 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastContainer } from 'react-toastify';
 import PrivateRoute from './components/PrivateRoute';
 import Navbar from './components/Navbar';
 
 // Pages
+import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -14,6 +15,19 @@ import Analytics from './pages/Analytics';
 
 import 'react-toastify/dist/ReactToastify.css';
 
+// Component to handle conditional root route
+const RootRoute = () => {
+  const { user } = useAuth();
+  
+  // If user is authenticated, redirect to dashboard
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  // If not authenticated, show home page
+  return <Home />;
+};
+
 function App() {
   return (
     <AuthProvider>
@@ -21,11 +35,11 @@ function App() {
         <div className="min-h-screen bg-background text-foreground dark">
           <Routes>
             {/* Public Routes */}
+            <Route path="/" element={<RootRoute />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             
             {/* Private Routes */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route 
               path="/dashboard" 
               element={
@@ -64,7 +78,7 @@ function App() {
             />
             
             {/* Catch all route */}
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           
           <ToastContainer

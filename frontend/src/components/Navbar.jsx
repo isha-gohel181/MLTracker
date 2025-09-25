@@ -28,7 +28,7 @@ const Navbar = () => {
 
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'New Experiment', href: '/experiments/new', icon: Plus },
+    // { name: 'New Experiment', href: '/experiments/new', icon: Plus },
     { name: 'Compare', href: '/experiments/compare', icon: GitCompare },
     { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   ];
