@@ -1,11 +1,23 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Badge } from './ui/badge';
 import { X, Plus } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select'; // Assuming this is your local customized Select
 
 const ExperimentForm = ({ experiment, onSubmit, onClose, availableTags = [] }) => {
   const [formData, setFormData] = useState({
@@ -13,7 +25,7 @@ const ExperimentForm = ({ experiment, onSubmit, onClose, availableTags = [] }) =
     accuracy: '',
     loss: '',
     notes: '',
-    tags: []
+    tags: [],
   });
   const [newTag, setNewTag] = useState('');
   const [loading, setLoading] = useState(false);
@@ -25,33 +37,31 @@ const ExperimentForm = ({ experiment, onSubmit, onClose, availableTags = [] }) =
         accuracy: experiment.accuracy?.toString() || '',
         loss: experiment.loss?.toString() || '',
         notes: experiment.notes || '',
-        tags: experiment.tags || []
+        tags: experiment.tags || [],
       });
     }
   }, [experiment]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleAddTag = () => {
-    if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
+  const handleAddTag = (tag = newTag) => {
+    const cleanTag = tag.trim();
+    if (cleanTag && !formData.tags.includes(cleanTag)) {
       setFormData(prev => ({
         ...prev,
-        tags: [...prev.tags, newTag.trim()]
+        tags: [...prev.tags, cleanTag],
       }));
-      setNewTag('');
     }
+    setNewTag('');
   };
 
   const handleRemoveTag = (tagToRemove) => {
     setFormData(prev => ({
       ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
+      tags: prev.tags.filter(tag => tag !== tagToRemove),
     }));
   };
 
@@ -62,7 +72,7 @@ const ExperimentForm = ({ experiment, onSubmit, onClose, availableTags = [] }) =
     const submitData = {
       ...formData,
       accuracy: parseFloat(formData.accuracy),
-      loss: parseFloat(formData.loss)
+      loss: parseFloat(formData.loss),
     };
 
     try {
@@ -74,6 +84,16 @@ const ExperimentForm = ({ experiment, onSubmit, onClose, availableTags = [] }) =
     }
   };
 
+  // Filter tags to ensure valid values only
+  const validAvailableTags = availableTags
+    .filter(
+      (tag) =>
+        typeof tag === 'string' &&
+        tag.trim() !== '' &&
+        !formData.tags.includes(tag.trim())
+    )
+    .map(tag => tag.trim());
+
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
@@ -84,6 +104,7 @@ const ExperimentForm = ({ experiment, onSubmit, onClose, availableTags = [] }) =
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Model Name */}
           <div className="space-y-2">
             <Label htmlFor="modelName">Model Name *</Label>
             <Input
@@ -96,6 +117,7 @@ const ExperimentForm = ({ experiment, onSubmit, onClose, availableTags = [] }) =
             />
           </div>
 
+          {/* Accuracy & Loss */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="accuracy">Accuracy (%) *</Label>
@@ -129,6 +151,7 @@ const ExperimentForm = ({ experiment, onSubmit, onClose, availableTags = [] }) =
             </div>
           </div>
 
+          {/* Notes */}
           <div className="space-y-2">
             <Label htmlFor="notes">Notes</Label>
             <Textarea
@@ -141,10 +164,11 @@ const ExperimentForm = ({ experiment, onSubmit, onClose, availableTags = [] }) =
             />
           </div>
 
+          {/* Tags */}
           <div className="space-y-2">
             <Label>Tags</Label>
-            
-            {/* Current Tags */}
+
+            {/* Selected Tags */}
             {formData.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-2">
                 {formData.tags.map((tag, index) => (
@@ -159,7 +183,7 @@ const ExperimentForm = ({ experiment, onSubmit, onClose, availableTags = [] }) =
               </div>
             )}
 
-            {/* Add New Tag */}
+            {/* Add New Tag Manually */}
             <div className="flex gap-2">
               <Input
                 value={newTag}
@@ -176,41 +200,31 @@ const ExperimentForm = ({ experiment, onSubmit, onClose, availableTags = [] }) =
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={handleAddTag}
+                onClick={() => handleAddTag()}
                 disabled={!newTag.trim()}
               >
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
 
-            {/* Available Tags */}
-            {availableTags.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Quick add:</p>
-                <div className="flex flex-wrap gap-1">
-                  {availableTags
-                    .filter(tag => !formData.tags.includes(tag))
-                    .slice(0, 10)
-                    .map(tag => (
-                      <Badge
-                        key={tag}
-                        variant="outline"
-                        className="cursor-pointer hover:bg-accent"
-                        onClick={() => {
-                          setFormData(prev => ({
-                            ...prev,
-                            tags: [...prev.tags, tag]
-                          }));
-                        }}
-                      >
-                        + {tag}
-                      </Badge>
-                    ))}
-                </div>
-              </div>
+            {/* Tag Selector via Dropdown */}
+            {validAvailableTags.length > 0 && (
+              <Select onValueChange={handleAddTag}>
+                <SelectTrigger className="w-full mt-2">
+                  <SelectValue placeholder="Select a tag" />
+                </SelectTrigger>
+                <SelectContent>
+                  {validAvailableTags.map(tag => (
+                    <SelectItem key={tag} value={tag}>
+                      {tag}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
           </div>
 
+          {/* Action Buttons */}
           <div className="flex gap-2 pt-4">
             <Button
               type="button"
@@ -220,11 +234,7 @@ const ExperimentForm = ({ experiment, onSubmit, onClose, availableTags = [] }) =
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-              className="flex-1"
-            >
+            <Button type="submit" disabled={loading} className="flex-1">
               {loading ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>

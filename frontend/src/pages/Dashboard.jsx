@@ -32,7 +32,7 @@ const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTags, setSelectedTags] = useState('');
+  const [selectedTags, setSelectedTags] = useState('all');
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
   const [editingExperiment, setEditingExperiment] = useState(null);
@@ -49,7 +49,7 @@ const Dashboard = () => {
       setLoading(true);
       const params = {
         search: searchTerm,
-        tags: selectedTags,
+        tags: selectedTags === 'all' ? '' : selectedTags,
         sortBy,
         sortOrder,
         limit: 50
@@ -212,12 +212,19 @@ const Dashboard = () => {
                 <SelectValue placeholder="Filter by tags" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All tags</SelectItem>
-                {availableTags.map(tag => (
-                  <SelectItem key={tag} value={tag}>{tag}</SelectItem>
-                ))}
+                <SelectItem value="all">All tags</SelectItem>
+                {availableTags
+                  .filter(tag => typeof tag === 'string' && tag.trim() !== '')
+                  .map(tag => {
+                    const cleanTag = tag.trim();
+                    return (
+                      <SelectItem key={cleanTag} value={cleanTag}>
+                        {cleanTag}
+                      </SelectItem>
+                    );
+                  })}
               </SelectContent>
-            </Select>
+            </Select> 
 
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger>
@@ -321,12 +328,12 @@ const Dashboard = () => {
               <Beaker className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium mb-2">No experiments found</h3>
               <p className="text-muted-foreground mb-4">
-                {searchTerm || selectedTags
+                {searchTerm || (selectedTags && selectedTags !== 'all')
                   ? 'Try adjusting your filters or search terms'
                   : 'Get started by creating your first experiment'
                 }
               </p>
-              {!searchTerm && !selectedTags && (
+              {!searchTerm && (!selectedTags || selectedTags === 'all') && (
                 <Button onClick={() => setShowForm(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Create Experiment
