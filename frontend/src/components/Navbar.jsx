@@ -21,9 +21,10 @@ const Navbar = () => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const handleLogout = async () => {
+    await logout();
+    // Ensure logout updates auth state before navigation
+    navigate('/');
   };
 
   const navItems = [
