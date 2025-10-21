@@ -36,5 +36,10 @@ export const experimentService = {
   getExperimentStats: async () => {
     const response = await api.get('/experiments/stats');
     return response.data;
+  },
+
+  getExperimentInsights: async (id) => {
+    const response = await api.get(`/experiments/${id}/insights`);
+    return response.data;
   }
 };

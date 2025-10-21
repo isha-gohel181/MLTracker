@@ -6,7 +6,8 @@ const {
   updateExperiment,
   deleteExperiment,
   getExperimentsForComparison,
-  getExperimentStats
+  getExperimentStats,
+  getExperimentInsights
 } = require('../controllers/experimentController');
 const auth = require('../middleware/auth');
 
@@ -17,6 +18,7 @@ router.use(auth);
 
 router.get('/stats', getExperimentStats);
 router.get('/compare', getExperimentsForComparison);
+router.get('/:id/insights', getExperimentInsights);
 router.get('/', getExperiments);
 router.get('/:id', getExperiment);
 router.post('/', createExperiment);

@@ -14,7 +14,9 @@ import {
   Target,
   TrendingDown,
   History,
-  BarChart3
+  BarChart3,
+  Brain,
+  Loader2
 } from 'lucide-react';
 import { Line } from 'react-chartjs-2';
 import {
@@ -29,6 +31,7 @@ import {
 } from 'chart.js';
 import { formatDate, formatDateTime, formatNumber, getAccuracyColor, getLossColor } from '../lib/utils';
 import { toast } from 'react-toastify';
+import ReactMarkdown from 'react-markdown';
 
 ChartJS.register(
   CategoryScale,
@@ -46,6 +49,8 @@ const ExperimentDetail = () => {
   const [experiment, setExperiment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [insights, setInsights] = useState(null);
+  const [insightsLoading, setInsightsLoading] = useState(false);
 
   useEffect(() => {
     fetchExperiment();
@@ -61,6 +66,18 @@ const ExperimentDetail = () => {
       navigate('/dashboard');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchInsights = async () => {
+    try {
+      setInsightsLoading(true);
+      const response = await experimentService.getExperimentInsights(id);
+      setInsights(response.data);
+    } catch (error) {
+      toast.error('Failed to generate AI insights');
+    } finally {
+      setInsightsLoading(false);
     }
   };
 
@@ -280,6 +297,7 @@ const ExperimentDetail = () => {
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="insights">AI Insights</TabsTrigger>
           {chartData && <TabsTrigger value="trends">Trends</TabsTrigger>}
           {experiment.versions && experiment.versions.length > 0 && (
             <TabsTrigger value="history">Version History</TabsTrigger>
@@ -345,6 +363,142 @@ const ExperimentDetail = () => {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="insights" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span className="flex items-center">
+                  <Brain className="h-5 w-5 mr-2" />
+                  AI-Powered Insights
+                </span>
+                <Button 
+                  onClick={fetchInsights} 
+                  disabled={insightsLoading}
+                  variant="outline"
+                >
+                  {insightsLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Brain className="h-4 w-4 mr-2" />
+                      Generate Insights
+                    </>
+                  )}
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {insights ? (
+                <div className="space-y-4">
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800">
+                    <div className="prose prose-sm max-w-none">
+                      <ReactMarkdown
+                        components={{
+                          h1: ({ children }) => (
+                            <h1 className="text-xl font-bold text-blue-900 dark:text-blue-100 mb-3 flex items-center">
+                              <Brain className="h-5 w-5 mr-2 text-blue-600" />
+                              {children}
+                            </h1>
+                          ),
+                          h2: ({ children }) => (
+                            <h2 className="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-2 mt-4">
+                              {children}
+                            </h2>
+                          ),
+                          h3: ({ children }) => (
+                            <h3 className="text-md font-medium text-blue-700 dark:text-blue-300 mb-2 mt-3">
+                              {children}
+                            </h3>
+                          ),
+                          p: ({ children }) => (
+                            <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-3">
+                              {children}
+                            </p>
+                          ),
+                          ul: ({ children }) => (
+                            <ul className="space-y-2 mb-4">
+                              {children}
+                            </ul>
+                          ),
+                          ol: ({ children }) => (
+                            <ol className="space-y-2 mb-4 list-decimal list-inside">
+                              {children}
+                            </ol>
+                          ),
+                          li: ({ children }) => (
+                            <li className="flex items-start">
+                              <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                              <span className="text-gray-700 dark:text-gray-300">{children}</span>
+                            </li>
+                          ),
+                          strong: ({ children }) => (
+                            <strong className="font-semibold text-blue-900 dark:text-blue-100 bg-blue-100 dark:bg-blue-900/30 px-1 py-0.5 rounded">
+                              {children}
+                            </strong>
+                          ),
+                          code: ({ children }) => (
+                            <code className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-2 py-1 rounded text-sm font-mono">
+                              {children}
+                            </code>
+                          ),
+                          blockquote: ({ children }) => (
+                            <blockquote className="border-l-4 border-blue-400 pl-4 italic text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-950/20 py-2 rounded-r">
+                              {children}
+                            </blockquote>
+                          )
+                        }}
+                      >
+                        {insights.insights}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                    <div className="flex items-center">
+                      <Brain className="h-4 w-4 mr-2 text-blue-500" />
+                      <span>AI-Generated Analysis</span>
+                    </div>
+                    <span>Generated on {formatDateTime(insights.generatedAt)}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+                    <Brain className="h-12 w-12 text-blue-500" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-gray-100">
+                    Unlock AI-Powered Insights
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                    Get intelligent analysis, performance recommendations, and actionable insights 
+                    for your machine learning experiment using advanced AI.
+                  </p>
+                  <Button 
+                    onClick={fetchInsights} 
+                    disabled={insightsLoading}
+                    className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-6 py-2"
+                    size="lg"
+                  >
+                    {insightsLoading ? (
+                      <>
+                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                        Analyzing Your Experiment...
+                      </>
+                    ) : (
+                      <>
+                        <Brain className="h-5 w-5 mr-2" />
+                        Generate AI Insights
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {chartData && (

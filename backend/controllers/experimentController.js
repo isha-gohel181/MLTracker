@@ -306,6 +306,88 @@ const getExperimentStats = async (req, res) => {
   }
 };
 
+// Generate AI insights for an experiment
+const getExperimentInsights = async (req, res) => {
+  try {
+    const experiment = await Experiment.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+      isActive: true
+    });
+
+    if (!experiment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Experiment not found'
+      });
+    }
+
+    // Prepare experiment data for AI analysis
+    const experimentData = {
+      modelName: experiment.modelName,
+      accuracy: experiment.accuracy,
+      loss: experiment.loss,
+      notes: experiment.notes || 'No notes provided',
+      tags: experiment.tags.join(', ') || 'No tags',
+      versions: experiment.versions.length,
+      createdAt: experiment.createdAt,
+      updatedAt: experiment.updatedAt
+    };
+
+    const prompt = `
+Analyze this machine learning experiment and provide insights and recommendations for improvement:
+
+Experiment Details:
+- Model Name: ${experimentData.modelName}
+- Current Accuracy: ${experimentData.accuracy}%
+- Current Loss: ${experimentData.loss}
+- Notes: ${experimentData.notes}
+- Tags: ${experimentData.tags}
+- Number of Versions: ${experimentData.versions + 1}
+- Created: ${experimentData.createdAt}
+- Last Updated: ${experimentData.updatedAt}
+
+Please provide:
+1. A brief summary of the experiment's performance
+2. Analysis of the accuracy and loss metrics
+3. Potential reasons for the current performance level
+4. Specific recommendations to improve accuracy
+5. Suggestions for reducing loss
+6. Any additional insights based on the model name and tags
+
+Keep the response concise but informative, structured in clear sections.
+`;
+
+    // Import Gemini AI
+    const { GoogleGenAI } = require('@google/genai');
+    const ai = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY
+    });
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt
+    });
+    console.log('Response structure:', JSON.stringify(response, null, 2));
+    const insights = response.text || response.response?.text || response.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    res.json({
+      success: true,
+      data: {
+        insights,
+        generatedAt: new Date()
+      }
+    });
+  } catch (error) {
+    console.error('Get experiment insights error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating AI insights',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getExperiments,
   getExperiment,
@@ -313,5 +395,6 @@ module.exports = {
   updateExperiment,
   deleteExperiment,
   getExperimentsForComparison,
-  getExperimentStats
+  getExperimentStats,
+  getExperimentInsights
 };
