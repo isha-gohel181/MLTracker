@@ -21,6 +21,73 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     minlength: 6
+  },
+  // Extended profile fields
+  fullName: {
+    type: String,
+    trim: true,
+    maxlength: 100
+  },
+  bio: {
+    type: String,
+    trim: true,
+    maxlength: 500
+  },
+  location: {
+    type: String,
+    trim: true,
+    maxlength: 100
+  },
+  organization: {
+    type: String,
+    trim: true,
+    maxlength: 100
+  },
+  role: {
+    type: String,
+    trim: true,
+    maxlength: 100
+  },
+  website: {
+    type: String,
+    trim: true,
+    maxlength: 200
+  },
+  github: {
+    type: String,
+    trim: true,
+    maxlength: 50
+  },
+  linkedin: {
+    type: String,
+    trim: true,
+    maxlength: 50
+  },
+  twitter: {
+    type: String,
+    trim: true,
+    maxlength: 50
+  },
+  profilePicture: {
+    type: String,
+    trim: true
+  },
+  // User settings
+  settings: {
+    emailNotifications: { type: Boolean, default: true },
+    pushNotifications: { type: Boolean, default: false },
+    weeklyReports: { type: Boolean, default: true },
+    experimentAlerts: { type: Boolean, default: true },
+    profileVisibility: { type: String, enum: ['public', 'team', 'private'], default: 'public' },
+    experimentVisibility: { type: String, enum: ['public', 'team', 'private'], default: 'private' },
+    shareAnalytics: { type: Boolean, default: false },
+    theme: { type: String, enum: ['light', 'dark', 'system'], default: 'dark' },
+    language: { type: String, default: 'en' },
+    timezone: { type: String, default: 'UTC-8' },
+    defaultExperimentType: { type: String, default: 'classification' },
+    autoSaveInterval: { type: Number, default: 5 },
+    maxExperiments: { type: Number, default: 100 },
+    dataRetention: { type: Number, default: 365 }
   }
 }, {
   timestamps: true

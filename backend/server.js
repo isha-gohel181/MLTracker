@@ -35,9 +35,14 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files (profile pictures)
+app.use('/uploads', express.static('uploads'));
+
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/experiments', require('./routes/experiments'));
+app.use('/api/profile', require('./routes/profile'));
+app.use('/api/activity', require('./routes/activity'));
 
 // Health check
 app.get('/api/health', (req, res) => {
